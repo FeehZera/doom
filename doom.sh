@@ -3,6 +3,9 @@
 #Instala Sudo
 apt install -y sudo
 
+#Instala unzip
+apt-get install unzip
+
 # Atualiza a lista de pacotes e instala as dependências
 sudo apt update && sudo apt install -y \
     libgl1-mesa-glx \
@@ -20,5 +23,8 @@ sudo apt update && sudo apt install -y \
 
 mkdir /home/doom
 wget /home/doom https://github.com/FeehZera/doom/raw/refs/heads/main/doom.zip
+unzip /home/doom/doom.zip
+#sudo dpkg -i gzdoom.deb
+
 
 echo "Todas as dependências foram instaladas com sucesso!"
