@@ -39,7 +39,7 @@ wget -P /home/doom https://github.com/FeehZera/doom/raw/refs/heads/main/doom.zip
 unzip /home/doom/doom.zip -d /home/doom
 
 # Instala o gzdoom.deb (substitua pela URL correta do arquivo .deb, ou garanta que ele já está em /home/doom)
-sudo dpkg -i /home/doom/gzdoom.deb
+sudo dpkg -i /home/doom/doom/gzdoom.deb
 
 # Verifica se a instalação do gzdoom foi bem-sucedida
 if [ $? -eq 0 ]; then
