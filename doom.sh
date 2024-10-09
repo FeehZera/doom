@@ -1,7 +1,6 @@
 #!/bin/bash 
 #https://github.com/FeehZera/doom/raw/refs/heads/main/doom.zip
 
-
 # Função para verificar se o último comando executado foi bem-sucedido
 check_success() {
     if [ $? -ne 0 ]; then
@@ -12,53 +11,80 @@ check_success() {
 
 # Verifica se o script está sendo executado como root
 if [ "$(id -u)" -ne 0 ]; then
-    echo "Este script precisa ser executado como root ou com sudo."
+    echo "Este script precisa ser executado como root."
     exit 1
 fi
 
-# Atualiza a lista de pacotes
-apt update
-check_success "Falha ao atualizar a lista de pacotes."
+# Verifica se o sudo já está instalado
+if ! command -v sudo &> /dev/null; then
+    echo "Sudo não está instalado, instalando sudo..."
+    apt update
+    check_success "Falha ao atualizar a lista de pacotes."
+    
+    # Instala o sudo sem usar sudo (pois já estamos como root)
+    apt install -y sudo
+    check_success "Falha ao instalar sudo."
+else
+    echo "Sudo já está instalado."
+fi
 
-# Instala o sudo, caso ainda não esteja instalado
-apt install -y sudo
-check_success "Falha ao instalar sudo."
+# Verifica se o unzip já está instalado
+if ! command -v unzip &> /dev/null; then
+    echo "Unzip não está instalado, instalando unzip..."
+    sudo apt-get install -y unzip
+    check_success "Falha ao instalar unzip."
+else
+    echo "Unzip já está instalado."
+fi
 
-# Instala unzip
-sudo apt-get install -y unzip
-check_success "Falha ao instalar unzip."
+# Verifica se as dependências necessárias já estão instaladas
+dependencies=("libgl1-mesa-glx" "libgl1-mesa-dri" "libsdl2-2.0-0" "libsdl2-image-2.0-0" "libsdl2-mixer-2.0-0" "libsdl2-ttf-2.0-0" "libopenal1" "libpulse0" "libasound2" "libvulkan1" "mesa-utils" "vulkan-utils")
 
-# Instala as dependências necessárias para rodar o Doom
-sudo apt-get install -y \
-    libgl1-mesa-glx \
-    libgl1-mesa-dri \
-    libsdl2-2.0-0 \
-    libsdl2-image-2.0-0 \
-    libsdl2-mixer-2.0-0 \
-    libsdl2-ttf-2.0-0 \
-    libopenal1 \
-    libpulse0 \
-    libasound2 \
-    libvulkan1 \
-    mesa-utils \
-    vulkan-utils
-check_success "Falha ao instalar as dependências."
+for dep in "${dependencies[@]}"; do
+    if dpkg -l | grep -q "$dep"; then
+        echo "$dep já está instalado."
+    else
+        echo "$dep não está instalado, instalando..."
+        sudo apt-get install -y "$dep"
+        check_success "Falha ao instalar $dep."
+    fi
+done
 
 # Cria o diretório onde o Doom será instalado
-mkdir -p /home/doom
-check_success "Falha ao criar o diretório /home/doom."
+if [ ! -d "/home/doom" ]; then
+    echo "Criando o diretório /home/doom..."
+    mkdir -p /home/doom
+    check_success "Falha ao criar o diretório /home/doom."
+else
+    echo "O diretório /home/doom já existe."
+fi
 
 # Faz o download do arquivo doom.zip (substitua pela URL correta do arquivo .zip)
-wget -P /home/doom https://github.com/FeehZera/doom/raw/refs/heads/main/doom.zip
-check_success "Falha ao fazer o download do arquivo doom.zip."
+if [ ! -f "/home/doom/doom.zip" ]; then
+    echo "Fazendo o download do arquivo doom.zip..."
+    wget -P /home/doom https://github.com/FeehZera/doom/raw/refs/heads/main/doom.zip
+    check_success "Falha ao fazer o download do arquivo doom.zip."
+else
+    echo "O arquivo doom.zip já existe."
+fi
 
 # Descompacta o arquivo doom.zip no diretório /home/doom
-unzip /home/doom/doom.zip -d /home/doom
-check_success "Falha ao descompactar o arquivo doom.zip."
+if [ ! -d "/home/doom/doom" ]; then
+    echo "Descompactando o arquivo doom.zip..."
+    unzip /home/doom/doom.zip -d /home/doom
+    check_success "Falha ao descompactar o arquivo doom.zip."
+else
+    echo "O arquivo já foi descompactado."
+fi
 
 # Instala o gzdoom.deb (substitua pela URL correta do arquivo .deb, ou garanta que ele já está em /home/doom)
-sudo dpkg -i /home/doom/gzdoom.deb
-check_success "Falha ao instalar o gzdoom."
+if ! dpkg -l | grep -q "gzdoom"; then
+    echo "gzdoom não está instalado, instalando gzdoom..."
+    sudo dpkg -i /home/doom/gzdoom.deb
+    check_success "Falha ao instalar o gzdoom."
+else
+    echo "gzdoom já está instalado."
+fi
 
 # Procura o caminho do executável gzdoom
 gzdoom_path=$(which gzdoom)
@@ -70,9 +96,13 @@ if [ -z "$gzdoom_path" ]; then
 fi
 
 # Cria um atalho chamado 'doom' no PATH para rodar o Doom
-echo "Criando atalho 'doom' para executar o jogo..."
-sudo ln -sf "$gzdoom_path" /usr/local/bin/doom
-check_success "Falha ao criar o atalho doom."
+if [ ! -L /usr/local/bin/doom ]; then
+    echo "Criando atalho 'doom' para executar o jogo..."
+    sudo ln -sf "$gzdoom_path" /usr/local/bin/doom
+    check_success "Falha ao criar o atalho doom."
+else
+    echo "Atalho 'doom' já existe."
+fi
 
 # Verifica se o link foi criado com sucesso
 if [ -L /usr/local/bin/doom ]; then
@@ -82,4 +112,4 @@ else
     exit 1
 fi
 
-echo "Todas as dependências foram instaladas e o atalho foi criado com sucesso!"
+echo "Todas as dependências foram instaladas, e o atalho foi criado com sucesso!"
