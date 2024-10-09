@@ -21,10 +21,10 @@ sudo apt update && sudo apt install -y \
     mesa-utils \
     vulkan-utils
 
-mkdir /home/doom
-wget /home/doom https://github.com/FeehZera/doom/raw/refs/heads/main/doom.zip
-unzip /home/doom/doom.zip
-#sudo dpkg -i gzdoom.deb
+mkdir -p /home/doom
+wget -p /home/doom https://github.com/FeehZera/doom/raw/refs/heads/main/doom.zip
+unzip /home/doom/doom.zip -d /home/doom
+sudo dpkg -i /home/doom/gzdoom.deb
 
 
 echo "Todas as dependências foram instaladas com sucesso!"
