@@ -1,11 +1,11 @@
 #!/bin/bash 
 #https://github.com/FeehZera/doom/raw/refs/heads/main/doom.zip
 
+
 # Função para verificar se o último comando executado foi bem-sucedido
 check_success() {
     if [ $? -ne 0 ]; then
-        echo "Erro: $1"
-        exit 1
+        echo "Erro: $1. Continuando a execução do script."
     fi
 }
 
@@ -17,13 +17,13 @@ fi
 
 # Verifica se o sudo já está instalado
 if ! command -v sudo &> /dev/null; then
-    echo "Sudo não está instalado, instalando sudo..."
+    echo "Sudo não está instalado, tentando instalar sudo..."
     apt update
-    check_success "Falha ao atualizar a lista de pacotes."
-    
-    # Instala o sudo sem usar sudo (pois já estamos como root)
-    apt install -y sudo
-    check_success "Falha ao instalar sudo."
+    if apt install -y sudo; then
+        echo "Sudo instalado com sucesso."
+    else
+        echo "Falha ao instalar sudo. Continuando a execução do script."
+    fi
 else
     echo "Sudo já está instalado."
 fi
@@ -31,8 +31,11 @@ fi
 # Verifica se o unzip já está instalado
 if ! command -v unzip &> /dev/null; then
     echo "Unzip não está instalado, instalando unzip..."
-    sudo apt-get install -y unzip
-    check_success "Falha ao instalar unzip."
+    if sudo apt-get install -y unzip; then
+        echo "Unzip instalado com sucesso."
+    else
+        echo "Falha ao instalar unzip. Continuando a execução do script."
+    fi
 else
     echo "Unzip já está instalado."
 fi
@@ -45,16 +48,22 @@ for dep in "${dependencies[@]}"; do
         echo "$dep já está instalado."
     else
         echo "$dep não está instalado, instalando..."
-        sudo apt-get install -y "$dep"
-        check_success "Falha ao instalar $dep."
+        if sudo apt-get install -y "$dep"; then
+            echo "$dep instalado com sucesso."
+        else
+            echo "Falha ao instalar $dep. Continuando a execução do script."
+        fi
     fi
 done
 
 # Cria o diretório onde o Doom será instalado
 if [ ! -d "/home/doom" ]; then
     echo "Criando o diretório /home/doom..."
-    mkdir -p /home/doom
-    check_success "Falha ao criar o diretório /home/doom."
+    if mkdir -p /home/doom; then
+        echo "Diretório /home/doom criado com sucesso."
+    else
+        echo "Falha ao criar o diretório /home/doom. Continuando a execução do script."
+    fi
 else
     echo "O diretório /home/doom já existe."
 fi
@@ -62,8 +71,11 @@ fi
 # Faz o download do arquivo doom.zip (substitua pela URL correta do arquivo .zip)
 if [ ! -f "/home/doom/doom.zip" ]; then
     echo "Fazendo o download do arquivo doom.zip..."
-    wget -P /home/doom https://github.com/FeehZera/doom/raw/refs/heads/main/doom.zip
-    check_success "Falha ao fazer o download do arquivo doom.zip."
+    if wget -P /home/doom https://github.com/FeehZera/doom/raw/refs/heads/main/doom.zip; then
+        echo "Arquivo doom.zip baixado com sucesso."
+    else
+        echo "Falha ao baixar o arquivo doom.zip. Continuando a execução do script."
+    fi
 else
     echo "O arquivo doom.zip já existe."
 fi
@@ -71,8 +83,11 @@ fi
 # Descompacta o arquivo doom.zip no diretório /home/doom
 if [ ! -d "/home/doom/doom" ]; then
     echo "Descompactando o arquivo doom.zip..."
-    unzip /home/doom/doom.zip -d /home/doom
-    check_success "Falha ao descompactar o arquivo doom.zip."
+    if unzip /home/doom/doom.zip -d /home/doom; then
+        echo "Arquivo doom.zip descompactado com sucesso."
+    else
+        echo "Falha ao descompactar o arquivo doom.zip. Continuando a execução do script."
+    fi
 else
     echo "O arquivo já foi descompactado."
 fi
@@ -80,8 +95,11 @@ fi
 # Instala o gzdoom.deb (substitua pela URL correta do arquivo .deb, ou garanta que ele já está em /home/doom)
 if ! dpkg -l | grep -q "gzdoom"; then
     echo "gzdoom não está instalado, instalando gzdoom..."
-    sudo dpkg -i /home/doom/gzdoom.deb
-    check_success "Falha ao instalar o gzdoom."
+    if sudo dpkg -i /home/doom/gzdoom.deb; then
+        echo "gzdoom instalado com sucesso."
+    else
+        echo "Falha ao instalar gzdoom. Continuando a execução do script."
+    fi
 else
     echo "gzdoom já está instalado."
 fi
@@ -91,15 +109,19 @@ gzdoom_path=$(which gzdoom)
 
 # Verifica se o gzdoom foi encontrado
 if [ -z "$gzdoom_path" ]; then
-    echo "O executável gzdoom não foi encontrado no sistema."
-    exit 1
+    echo "O executável gzdoom não foi encontrado no sistema. Continuando a execução do script."
+else
+    echo "Executável gzdoom encontrado em: $gzdoom_path."
 fi
 
 # Cria um atalho chamado 'doom' no PATH para rodar o Doom
 if [ ! -L /usr/local/bin/doom ]; then
     echo "Criando atalho 'doom' para executar o jogo..."
-    sudo ln -sf "$gzdoom_path" /usr/local/bin/doom
-    check_success "Falha ao criar o atalho doom."
+    if sudo ln -sf "$gzdoom_path" /usr/local/bin/doom; then
+        echo "Atalho 'doom' criado com sucesso."
+    else
+        echo "Falha ao criar o atalho doom. Continuando a execução do script."
+    fi
 else
     echo "Atalho 'doom' já existe."
 fi
@@ -112,4 +134,4 @@ else
     exit 1
 fi
 
-echo "Todas as dependências foram instaladas, e o atalho foi criado com sucesso!"
+echo "Script executado com sucesso, mesmo que alguns erros tenham ocorrido."
